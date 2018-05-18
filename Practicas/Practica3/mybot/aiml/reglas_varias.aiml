@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiml version="2.0">
+
+<!-- INTRODUCCION, TONTERIAS -->
+<category>
+	<pattern>Hola</pattern>
+	<template>
+		<random>
+		<li> Hola! </li>
+		<li> Buenas! Qué tal? </li>
+		<li> SALU2 </li>
+		</random>
+	</template>
+</category>
+
+<!-- con think evitamos que aparezca el nombre-->
+<category>
+	<pattern>^ [nombre llamo] *</pattern>
+	<template>
+		<think><set name="nombre"><star index="2"/></set></think>
+		Encantado de conocerte <get name="nombre"/>
+	</template>
+</category>
+
+<category>
+	<pattern>* [llamo nombre]</pattern>
+	<template>
+		<condition name="nombre">
+			<li value="unknown">No se tu nombre :(</li>
+			<li>Te llamas <get name="nombre"/></li>
+		</condition>
+	</template>
+</category>
+
+
+<category>
+	<pattern>* llamas</pattern>
+	<template>
+		Mi nombre es Maxigang di Hispania, la Perdición del Rey Caído, Matarreyes... pero puedes decirme Maxigang :D
+	</template>
+</category>
+
+<category>
+	<pattern>^ tu nombre</pattern>
+	<template>
+		<srai>* LLAMAS</srai>
+	</template>
+</category>
+
+<category>
+	<pattern>^ tu genero ^</pattern>
+	<template>
+		<bot name="gender"/>
+	</template>
+</category>
+
+<category>
+	<pattern>Eres hombre o mujer</pattern>
+	<template>
+		<srai>^ tu genero ^</srai>
+	</template>
+</category>
+
+<category>
+	<pattern>^ color favorito ^</pattern>
+	<template>
+		El color de tu corazon ^_^
+	</template>
+</category>
+
+
+<category>
+	<pattern>Estudio * en *</pattern>
+	<template>
+		Curioso! yo también estudio <star/> en <star index="2"/>
+	</template>
+</category>
+
+<category>
+	<pattern>Adios ^</pattern>
+	<template>
+		Te echaré de menos :(
+	</template>
+</category>
+
+
+<!-- USO DE MAPS -->
+
+<category>
+	<pattern>Cual es el tipo de *</pattern>
+	<template>
+	El tipo de <star/> es <map name="pokemon"><star/></map>.
+	</template>
+</category>
+
+</aiml>

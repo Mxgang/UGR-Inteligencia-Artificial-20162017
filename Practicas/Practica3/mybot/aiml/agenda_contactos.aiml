@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiml version="2.0">
+
+<!--///////////////////////////////////////////////
+/////////////AGENDA DE CONTACTOS /////////////////
+/////////////////////////////////////////////////
+////////////////////////////////////////////////-->
+
+<!-- AGREGAR CONTACTO -->
+<category>
+	<pattern>^ [agrega añadi]+ ^ contacto ^</pattern>
+	<template>
+		<set name="topic">Dime el apellido</set>
+	</template>
+</category>
+
+	<topic name="Dime el apellido">
+	<category>
+		<pattern>*</pattern>
+		<template>
+			<think>
+				<set var="tmp"><star/></set>
+				<set var="solucion"><first><get var="tmp"/></first></set>
+				<set var="tmp"><rest><get var="tmp"/></rest></set>
+				<condition var="tmp">
+					<li value="NIL">
+					</li>
+					<li>
+						<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+						<set var="tmp"><rest><get var="tmp"/></rest></set>
+						<loop/>
+					</li>
+				</condition>
+			 </think>
+			<think><set name="ap"><get var="solucion"/></set></think>
+			<think><set name="encontrar apellido al agregar"><map name="nombre"><get name="ap"/></map></set></think>
+			<condition name="encontrar apellido al agregar">
+				<li value="unknown"><set name="topic">Dime el nombre</set></li>
+				<li>Ese contacto ya existe!</li>
+			</condition>
+		</template>
+	</category>
+	</topic>
+
+		<topic name="Dime el nombre">
+		<category>
+			<pattern>*</pattern>
+			<template>
+				<think>
+					<set var="tmp"><star/></set>
+					<set var="solucion"><first><get var="tmp"/></first></set>
+					<set var="tmp"><rest><get var="tmp"/></rest></set>
+					<condition var="tmp">
+						<li value="NIL">
+						</li>
+						<li>
+							<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+							<set var="tmp"><rest><get var="tmp"/></rest></set>
+							<loop/>
+						</li>
+					</condition>
+				</think>
+				<think><set name="nomb"><get var="solucion"/></set></think>
+				<addtomap>
+					<name>nombre</name>
+					<key><get name="ap"/></key>
+					<value><get name="nomb"/></value>
+				</addtomap>
+				<set name="topic">Dime el numero de telefono</set>
+			</template>
+		</category>
+		</topic>
+
+			<topic name="Dime el numero de telefono">
+			<category>
+				<pattern>*</pattern>
+				<template>
+					<think><set name="tel"><star/></set></think>
+					<addtomap>
+						<name>telefono</name>
+						<key><get name="ap"/></key>
+						<value><get name="tel"/></value>
+					</addtomap>
+					<set name="topic">Dime la direccion</set>
+				</template>
+			</category>
+			</topic>
+
+				<topic name="Dime la direccion">
+				<category>
+					<pattern>*</pattern>
+					<template>
+						<think><set name="dir"><star/></set></think>
+						<addtomap>
+							<name>direccion</name>
+							<key><get name="ap"/></key>
+							<value><get name="dir"/></value>
+						</addtomap>
+						Contacto guardado!
+					</template>
+				</category>
+				</topic>
+
+<!-- MODIFICAR CONTACTO -->
+<category>
+	<pattern>^ modifica+ ^ contacto ^</pattern>
+	<template>
+		<set name="topic">Dime el apellido a modificar</set>
+	</template>
+</category>
+
+	<topic name="Dime el apellido a modificar">
+	<category>
+		<pattern>*</pattern>
+		<template>
+			<think>
+				<set var="tmp"><star/></set>
+				<set var="solucion"><first><get var="tmp"/></first></set>
+				<set var="tmp"><rest><get var="tmp"/></rest></set>
+				<condition var="tmp">
+					<li value="NIL">
+					</li>
+					<li>
+						<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+						<set var="tmp"><rest><get var="tmp"/></rest></set>
+						<loop/>
+					</li>
+				</condition>
+			 </think>
+			<think><set name="ap"><get var="solucion"/></set></think>
+			<think><set name="encontrar apellido al modificar"><map name="nombre"><get name="ap"/></map></set></think>
+			<condition name="encontrar apellido al modificar">
+				<li value="unknown">No he encontrado ese apellido</li>
+				<li><set name="topic">Quiere modificar el telefono o direccion?</set></li>
+			</condition>
+		</template>
+	</category>
+	</topic>
+
+		<topic name="Quiere modificar el telefono o direccion?">
+				<category>
+					<pattern>telefono</pattern>
+					<template>
+						<set name="topic">Dime el numero de telefono nuevo</set>
+					</template>
+				</category>
+		</topic>
+
+			<topic name="Dime el numero de telefono nuevo">
+				<category>
+					<pattern>*</pattern>
+					<template>
+						<think><set name="tel"><star/></set></think>
+						<modifymap>
+							<name>telefono</name>
+							<key><get name="ap"/></key>
+							<value><get name="tel"/></value>
+						</modifymap>
+						Hecho!
+					</template>
+				</category>
+			</topic>
+
+		<topic name="Quiere modificar el telefono o direccion?">
+				<category>
+					<pattern>direccion</pattern>
+					<template>
+						<set name="topic">Dime la direccion nueva</set>
+					</template>
+				</category>
+		</topic>
+
+			<topic name="Dime la direccion nueva">
+				<category>
+					<pattern>*</pattern>
+					<template>
+						<think><set name="dir"><star/></set></think>
+						<modifymap>
+							<name>direccion</name>
+							<key><get name="ap"/></key>
+							<value><get name="dir"/></value>
+						</modifymap>
+						Hecho!
+					</template>
+				</category>
+			</topic>
+
+<!-- BORRAR CONTACTO -->
+<category>
+	<pattern>^ borra+ ^ contacto ^</pattern>
+	<template>
+		<set name="topic">Dime el apellido a borrar</set>
+	</template>
+</category>
+
+	<topic name="Dime el apellido a borrar">
+	<category>
+		<pattern>*</pattern>
+		<template>
+			<think>
+				<set var="tmp"><star/></set>
+				<set var="solucion"><first><get var="tmp"/></first></set>
+				<set var="tmp"><rest><get var="tmp"/></rest></set>
+				<condition var="tmp">
+					<li value="NIL">
+					</li>
+					<li>
+						<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+						<set var="tmp"><rest><get var="tmp"/></rest></set>
+						<loop/>
+					</li>
+				</condition>
+			 </think>
+			<think><set name="ap"><get var="solucion"/></set></think>
+			<think><set name="encontrar apellido al borrar"><map name="nombre"><get name="ap"/></map></set></think>
+			<condition name="encontrar apellido al borrar">
+				<li value="unknown">No he encontrado ese apellido</li>
+				<li><set name="topic">Seguro que quiere borrarlo?</set></li>
+			</condition>
+		</template>
+	</category>
+	</topic>
+
+		<topic name="Seguro que quiere borrarlo?">
+				<category>
+					<pattern>si</pattern>
+					<template>
+						<removefrommap>
+						<name>telefono</name>
+						<key><get name="ap"/></key>
+						</removefrommap>
+						<removefrommap>
+						<name>direccion</name>
+						<key><get name="ap"/></key>
+						</removefrommap>
+						<removefrommap>
+						<name>nombre</name>
+						<key><get name="ap"/></key>
+						</removefrommap>
+						Borrado!
+					</template>
+				</category>
+		</topic>
+
+		<topic name="Seguro que quiere borrarlo?">
+				<category>
+					<pattern>no</pattern>
+					<template>
+						Contacto no borrado
+					</template>
+				</category>
+		</topic>
+
+<!-- BUSCAR CONTACTO -->
+
+<category>
+	<pattern>^ busca+ ^ contacto ^</pattern>
+	<template>
+		<set name="topic">Dime el apellido a buscar</set>
+	</template>
+</category>
+
+	<topic name="Dime el apellido a buscar">
+	<category>
+		<pattern>*</pattern>
+		<template>
+			<think>
+				<set var="tmp"><star/></set>
+				<set var="solucion"><first><get var="tmp"/></first></set>
+				<set var="tmp"><rest><get var="tmp"/></rest></set>
+				<condition var="tmp">
+					<li value="NIL">
+					</li>
+					<li>
+						<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+						<set var="tmp"><rest><get var="tmp"/></rest></set>
+						<loop/>
+					</li>
+				</condition>
+			 </think>
+			<think><set name="ap"><get var="solucion"/></set></think>
+			<think><set name="encontrar apellido al buscar"><map name="nombre"><get name="ap"/></map></set></think>
+			<condition name="encontrar apellido al buscar">
+				<li value="unknown">No he encontrado ese apellido</li>
+				<li><set name="topic">Quiere buscar el nombre, direccion o numero de telefono?</set></li>
+			</condition>
+		</template>
+	</category>
+	</topic>
+
+		<topic name="Quiere buscar el nombre, direccion o numero de telefono?">
+				<category>
+					<pattern>telefono</pattern>
+					<template>
+						El numero es: <map name="telefono"><get name="ap"/></map>
+					</template>
+				</category>
+		</topic>
+
+		<topic name="Quiere buscar el nombre, direccion o numero de telefono?">
+				<category>
+					<pattern>direccion</pattern>
+					<template>
+						La direccion es: <map name="direccion"><get name="ap"/></map>
+					</template>
+				</category>
+		</topic>
+
+		<topic name="Quiere buscar el nombre, direccion o numero de telefono?">
+				<category>
+					<pattern>nombre</pattern>
+					<template>
+						El nombre es: <map name="nombre"><get name="ap"/></map>
+					</template>
+				</category>
+		</topic>
+
+<!-- LISTA DE CONTACTOS //ARREGLAR -->
+
+<category>
+	<pattern>^ lista ^ contactos ^</pattern>
+	<template>
+		Los apellidos guardados son: <set var="claves"><readkeys>telefono</readkeys></set>
+	</template>
+</category>
+
+<!-- NUMERO DE CONTACTOS ALMACENADOS-->
+
+<category>
+	<pattern>^ contactos ^ almacenados ^</pattern>
+	<template>
+		El numero de contactos almacenados es: <srai>COUNT <readkeys>nombre</readkeys></srai>
+	</template>
+</category>
+
+</aiml>

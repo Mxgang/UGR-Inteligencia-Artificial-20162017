@@ -1,0 +1,1077 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiml version="2.0">
+
+<!--///////////////////////////////////////////////
+/////////////AGENDA DE EVENTOS ///////////////////
+/////////////////////////////////////////////////
+////////////////////////////////////////////////-->
+
+<!-- AGREGAR EVENTO -->
+
+<category>
+	<pattern>^ [agrega añadi]+ ^ evento ^</pattern>
+	<template>
+		<set name="topic">Dime la fecha en formato dd/mm/aaaa</set>
+	</template>
+</category>
+
+	<topic name="Dime la fecha en formato dd/mm/aaaa">
+	<category>
+		<pattern><set>anios</set></pattern>
+		<template>
+			<think><set name="dia"><star/></set></think>
+			<set name="topic">Dime la hora en formato hhmm</set>
+		</template>
+	</category>
+	</topic>
+
+		<topic name="Dime la hora en formato hhmm">
+		<category>
+			<pattern><set>horas</set></pattern>
+			<template>
+				<think><set name="hora"><star/></set></think>
+				<think><set name="encontrar fecha al agregar"><map name="fecha"><get name="dia"/>_<get name="hora"/></map></set></think>
+				<condition name="encontrar fecha al agregar">
+					<li value="unknown">
+						<addtomap>
+						<name>fecha</name>
+						<key><get name="dia"/>_<get name="hora"/></key>
+						<value>evento</value>
+						</addtomap>
+						<set name="topic">Dime el titulo</set>
+					</li>
+					<li>
+						Ese día y hora están pillados!
+					</li>
+				</condition>
+			</template>
+		</category>
+		</topic>
+
+			<topic name="Dime el titulo">
+				<category>
+					<pattern>*</pattern>
+					<template>
+						<think>
+							<set var="tmp"><star/></set>
+							<set var="solucion"><first><get var="tmp"/></first></set>
+							<set var="tmp"><rest><get var="tmp"/></rest></set>
+							<condition var="tmp">
+								<li value="NIL">
+								</li>
+								<li>
+									<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+									<set var="tmp"><rest><get var="tmp"/></rest></set>
+									<loop/>
+								</li>
+							</condition>
+						 </think>
+					<think><set name="titulo_antiguo"><map name="eventos"><get name="dia"/></map></set></think>
+					<think><set name="titulo"><get var="solucion"/></set></think>
+						<condition name="titulo_antiguo">
+							<li value="unknown">
+								<addtomap>
+								<name>eventos</name>
+								<key><get name="dia"/></key>
+								<value><get name="titulo"/></value>
+								</addtomap>
+							</li>
+							<li>
+								<removefrommap>
+									<name>eventos</name>
+									<key><get name="dia"/></key>
+								</removefrommap>
+								<addtomap>
+								<name>eventos</name>
+								<key><get name="dia"/></key>
+								<value><get name="titulo"/> <get name="titulo_antiguo"/></value>
+								</addtomap>
+							</li>
+						</condition>
+						<addtomap>
+						<name>titulo</name>
+						<key><get name="dia"/>_<get name="hora"/></key>
+						<value><get name="titulo"/></value>
+						</addtomap>
+						Quiere asociar un contacto al evento?
+						<think><set name="topic">Contactos implicados</set></think>
+					</template>
+				</category>
+			</topic>
+
+				<topic name="Contactos implicados">
+					<category>
+						<pattern>si</pattern>
+						<template>
+							<set name="topic">Dime el apellido del contacto implicado</set>
+						</template>
+					</category>
+				</topic>
+
+					<topic name="Dime el apellido del contacto implicado">
+						<category>
+							<pattern>*</pattern>
+							<template>
+								<think>
+									<set var="tmp"><star/></set>
+									<set var="solucion"><first><get var="tmp"/></first></set>
+									<set var="tmp"><rest><get var="tmp"/></rest></set>
+									<condition var="tmp">
+										<li value="NIL">
+										</li>
+										<li>
+											<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+											<set var="tmp"><rest><get var="tmp"/></rest></set>
+											<loop/>
+										</li>
+									</condition>
+								  </think>
+								<think><set name="contactos"><get var="solucion"/></set></think>
+								<think><set name="buscar contactos en agenda"><map name="nombre"><get name="contactos"/></map></set></think>
+								<think><set name="buscar contactos en evento"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map></set></think>
+								<think><set name="contacto_antiguo"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map></set></think>
+								<condition name="buscar contactos en agenda">
+									<li value="unknown">
+										Ese contacto no existe en tu agenda!
+									</li>
+									<li>
+										<condition name="contacto_antiguo">
+											<li value="unknown">
+												<addtomap>
+												<name>contactos_evento</name>
+												<key><get name="dia"/>_<get name="hora"/></key>
+												<value><get name="contactos"/></value>
+												</addtomap>
+												Quiere asociar otro contacto al evento?
+												<think><set name="topic">Contactos implicados</set></think>
+											</li>
+											<li>
+												<removefrommap>
+													<name>contactos_evento</name>
+													<key><get name="dia"/>_<get name="hora"/></key>
+												</removefrommap>
+												<addtomap>
+												<name>contactos_evento</name>
+												<key><get name="dia"/>_<get name="hora"/></key>
+												<value><get name="contactos"/> <get name="contacto_antiguo"/></value>
+												</addtomap>
+												Quiere asociar otro contacto al evento?
+												<think><set name="topic">Contactos implicados</set></think>
+											</li>
+										</condition>
+									</li>
+								</condition>
+							</template>
+						</category>
+					</topic>
+
+				<topic name="Contactos implicados">
+					<category>
+						<pattern>no</pattern>
+						<template>
+							Evento agregado!
+						</template>
+					</category>
+				</topic>
+
+<!-- MODIFICAR EVENTOS -->
+<!-- Aquí, al modificar fecha/hora tengo que hacer una copia, borrarlos y añadirlos de nuevo -->
+<category>
+	<pattern>^ modifica+ ^ evento ^</pattern>
+	<template>
+		<set name="topic">Dime la fecha en formato dd/mm/aaaa para modificar el evento</set>
+	</template>
+</category>
+
+	<topic name="Dime la fecha en formato dd/mm/aaaa para modificar el evento">
+	<category>
+		<pattern><set>anios</set></pattern>
+		<template>
+			<think><set name="dia"><star/></set></think>
+			<set name="topic">Dime la hora en formato hhmm para modificar el evento</set>
+		</template>
+	</category>
+	</topic>
+
+		<topic name="Dime la hora en formato hhmm para modificar el evento">
+		<category>
+			<pattern><set>horas</set></pattern>
+			<template>
+				<think><set name="hora"><star/></set></think>
+				<think><set name="encontrar fecha al modificar"><map name="fecha"><get name="dia"/>_<get name="hora"/></map></set></think>
+				<condition name="encontrar fecha al modificar">
+					<li value="unknown">
+						No se ha encontrado ese evento!
+					</li>
+
+					<li>
+						<set name="topic">Quiere modificar la fecha, hora, titulo o contactos del evento?</set>
+					</li>
+
+				</condition>
+			</template>
+		</category>
+		</topic>
+
+		<topic name="Quiere modificar la fecha, hora, titulo o contactos del evento?">
+				<category>
+					<pattern>fecha</pattern>
+					<template>
+						<set name="topic">Dime la fecha nueva en formato dd/mm/aaaa</set>
+					</template>
+				</category>
+		</topic>
+
+		<topic name="Dime la fecha nueva en formato dd/mm/aaaa">
+				<category>
+					<pattern><set>anios</set></pattern>
+					<template>
+						<think><set name="nuevodia"><star/></set></think>
+						<think><set name="encontrar nueva fecha al modificar"><map name="fecha"><get name="nuevodia"/>_<get name="hora"/></map></set></think>
+						<condition name="encontrar nueva fecha al modificar">
+							<li value="unknown">
+								<think><set name="hayeventoantiguo"><map name="eventos"><get name="dia"/></map></set></think>
+								<think><set name="hayevento"><map name="eventos"><get name="nuevodia"/></map></set></think>
+								<think><set name="titulocopia"><map name="titulo"><get name="dia"/>_<get name="hora"/></map></set></think>
+									<think><set name="contactocopia"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map></set></think>
+									<condition name="contactocopia">
+										<li value="unknown">
+										</li>
+										<li>
+											<removefrommap>
+												<name>contactos_evento</name>
+												<key><get name="dia"/>_<get name="hora"/></key>
+											</removefrommap>
+											<addtomap>
+												<name>contactos_evento</name>
+												<key><get name="nuevodia"/>_<get name="hora"/></key>
+												<value><get name="contactocopia"/></value>
+											</addtomap>
+										</li>
+									</condition>
+										<removefrommap>
+											<name>fecha</name>
+											<key><get name="dia"/>_<get name="hora"/></key>
+										</removefrommap>
+										
+
+										<addtomap>
+											<name>fecha</name>
+											<key><get name="nuevodia"/>_<get name="hora"/></key>
+											<value>evento</value>
+										</addtomap>
+										<think>
+													<set var="evento_buscado">
+														<map name="titulo"><get name="dia"/>_<get name="hora"/></map>
+													</set>
+													<set var="buscado">
+														<uppercase><get var="evento_buscado"/></uppercase>
+													</set>
+													<set var="lista">
+														<map name="eventos"><get name="dia"/></map>
+													</set>
+													<set var="item">
+														<uppercase><srai>TOP <get var="lista"/></srai></uppercase>
+													</set>
+													<set var="posicion">1</set>
+												</think>
+												<condition var="item">
+													<li value="$">No se ha encontrado ese evento!</li>
+													<!-- al poner un think se jode y me borra el primero -->
+													<li><value><get var="buscado"/></value><get var="count"/></li>
+													<li>
+														<think>
+															<set var="posicion">
+																<map>
+																	<name>successor</name>
+																	<get var="posicion"/>
+																</map>
+															</set>
+															<set var="lista">
+																<srai>REMAIN <get var="lista"/></srai>
+															</set>
+															<set var="item">
+																<uppercase><srai>TOP <get var="lista"/></srai></uppercase>
+															</set>
+														</think>
+														<loop/>
+													</li>
+												</condition>
+
+											<think>
+												<set var="count"><get var="posicion"/></set>
+												<set var="list"><map name="eventos"><get name="dia"/></map></set>
+												<set var="list_1"/>
+												<set var="item"><srai>TOP <get var="list"/></srai></set>
+												<set var="list"><srai>REMAIN <get var="list"/></srai></set>
+											</think>
+											<condition var="count">
+												<li value="1">
+												</li>
+												<li>
+													<think>
+														<set var="count">
+															<map>
+																<name>predecessor</name>
+																<get var="count"/>
+															</map>
+														</set>
+														<set var="list_1">
+															<get var="list_1"/>
+															<get var="item"/>
+														</set>
+														<set var="item">
+															<srai>TOP <get var="list"/></srai>
+														</set>
+														<set var="list">
+															<srai>REMAIN <get var="list"/></srai>
+														</set>
+														<condition var="list">
+															<li value="$">
+																<set var="list"/>
+															</li>
+														</condition>
+														<condition var="item">
+															<li value="$">
+																<set var="item"/>
+															</li>
+														</condition>
+													</think>
+													<loop/>
+												</li>
+											</condition>
+										
+										<condition name="hayevento">
+											<li value="unknown">
+												<removefrommap>
+													<name>eventos</name>
+													<key><get name="dia"/></key>
+												</removefrommap>
+												<addtomap>
+													<name>eventos</name>
+													<key><get name="dia"/></key>
+													<value><get var="list_1"/> <get var="list"/></value>
+												</addtomap>
+												<addtomap>
+													<name>eventos</name>
+													<key><get name="nuevodia"/></key>
+													<value><get var="evento_buscado"/></value>
+												</addtomap>
+											</li>
+											<li>
+												<think><set name="otrotitulo"><map name="eventos"><get name="nuevodia"/></map></set></think>
+												<think><set name="otrotitulomas"><map name="eventos"><get name="dia"/></map></set></think>
+												<removefrommap>
+													<name>eventos</name>
+													<key><get name="nuevodia"/></key>
+												</removefrommap>
+												<addtomap>
+													<name>eventos</name>
+													<key><get name="nuevodia"/></key>
+													<value><get name="otrotitulo"/> <get name="otrotitulomas"/></value>
+												</addtomap>
+												<removefrommap>
+													<name>eventos</name>
+													<key><get name="dia"/></key>
+												</removefrommap>
+											</li>
+										</condition>
+										<condition name="hayeventoantiguo">
+											<li value="$">
+												<removefrommap>
+													<name>eventos</name>
+													<key><get name="dia"/></key>
+												</removefrommap>
+											</li>
+										</condition>
+										<removefrommap>
+											<name>titulo</name>
+											<key><get name="dia"/>_<get name="hora"/></key>
+										</removefrommap>
+										<addtomap>
+											<name>titulo</name>
+											<key><get name="nuevodia"/>_<get name="hora"/></key>
+											<value><get name="titulocopia"/></value>
+										</addtomap>
+										Hecho!
+							</li>
+
+							<li>
+								Ya existe un evento con esta fecha y hora!
+							</li>
+						</condition>
+						
+					</template>
+				</category>
+			</topic>
+
+		<topic name="Quiere modificar la fecha, hora, titulo o contactos del evento?">
+				<category>
+					<pattern>hora</pattern>
+					<template>
+						<set name="topic">Dime la hora nueva en formato hhmm</set>
+					</template>
+				</category>
+		</topic>
+
+			<topic name="Dime la hora nueva en formato hhmm">
+				<category>
+					<pattern><set>horas</set></pattern>
+					<template>
+						<think><set name="nuevahora"><star/></set></think>
+						<think><set name="encontrar nueva hora al modificar"><map name="fecha"><get name="dia"/>_<get name="nuevahora"/></map></set></think>
+						<condition name="encontrar nueva hora al modificar">
+							<li value="unknown">
+								<think><set name="titulocopia"><map name="titulo"><get name="dia"/>_<get name="hora"/></map></set></think>
+								<think><set name="contactocopia"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map></set></think>
+								<removefrommap>
+									<name>titulo</name>
+									<key><get name="dia"/>_<get name="hora"/></key>
+								</removefrommap>
+								<removefrommap>
+									<name>fecha</name>
+									<key><get name="dia"/>_<get name="hora"/></key>
+								</removefrommap>
+								<addtomap>
+										<name>titulo</name>
+										<key><get name="dia"/>_<get name="nuevahora"/></key>
+										<value><get name="titulocopia"/></value>
+								</addtomap>
+								<condition name="contactocopia">
+									<li value="unknown">
+									</li>
+									<li>
+										<removefrommap>
+											<name>contactos_evento</name>
+											<key><get name="dia"/>_<get name="hora"/></key>
+										</removefrommap>
+										<addtomap>
+											<name>contactos_evento</name>
+											<key><get name="dia"/>_<get name="nuevahora"/></key>
+											<value><get name="contactocopia"/></value>
+										</addtomap>
+									</li>
+								</condition>
+								<addtomap>
+										<name>fecha</name>
+										<key><get name="dia"/>_<get name="nuevahora"/></key>
+										<value>evento</value>
+								</addtomap>
+								Hecho!
+							</li>
+							<li>
+								Ya existe un evento con esta fecha y hora!
+							</li>
+						</condition>
+					</template>
+				</category>
+			</topic>
+
+			<topic name="Quiere modificar la fecha, hora, titulo o contactos del evento?">
+				<category>
+					<pattern>titulo</pattern>
+					<template>
+						<set name="topic">Dime el nuevo titulo</set>
+					</template>
+				</category>
+			</topic>
+
+			<topic name="Dime el nuevo titulo">
+				<category>
+					<pattern>*</pattern>
+					<template>
+						<think>
+							<set var="tmp"><star/></set>
+							<set var="solucion"><first><get var="tmp"/></first></set>
+							<set var="tmp"><rest><get var="tmp"/></rest></set>
+							<condition var="tmp">
+								<li value="NIL">
+								</li>
+								<li>
+									<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+									<set var="tmp"><rest><get var="tmp"/></rest></set>
+									<loop/>
+								</li>
+							</condition>
+						 </think>
+						<think><set name="nuevotitulo"><get var="solucion"/></set></think>
+						<think>
+													<set var="evento_buscado">
+														<map name="titulo"><get name="dia"/>_<get name="hora"/></map>
+													</set>
+													<set var="buscado">
+														<uppercase><get var="evento_buscado"/></uppercase>
+													</set>
+													<set var="lista">
+														<map name="eventos"><get name="dia"/></map>
+													</set>
+													<set var="item">
+														<uppercase><srai>TOP <get var="lista"/></srai></uppercase>
+													</set>
+													<set var="posicion">1</set>
+												</think>
+												<condition var="item">
+													<li value="$">No se ha encontrado ese evento!</li>
+													<!-- al poner un think se jode y me borra el primero -->
+													<li><value><get var="buscado"/></value><get var="count"/></li>
+													<li>
+														<think>
+															<set var="posicion">
+																<map>
+																	<name>successor</name>
+																	<get var="posicion"/>
+																</map>
+															</set>
+															<set var="lista">
+																<srai>REMAIN <get var="lista"/></srai>
+															</set>
+															<set var="item">
+																<uppercase><srai>TOP <get var="lista"/></srai></uppercase>
+															</set>
+														</think>
+														<loop/>
+													</li>
+												</condition>
+
+											<think>
+												<set var="count"><get var="posicion"/></set>
+												<set var="list"><map name="eventos"><get name="dia"/></map></set>
+												<set var="list_1"/>
+												<set var="item"><srai>TOP <get var="list"/></srai></set>
+												<set var="list"><srai>REMAIN <get var="list"/></srai></set>
+											</think>
+											<condition var="count">
+												<li value="1">
+												</li>
+												<li>
+													<think>
+														<set var="count">
+															<map>
+																<name>predecessor</name>
+																<get var="count"/>
+															</map>
+														</set>
+														<set var="list_1">
+															<get var="list_1"/>
+															<get var="item"/>
+														</set>
+														<set var="item">
+															<srai>TOP <get var="list"/></srai>
+														</set>
+														<set var="list">
+															<srai>REMAIN <get var="list"/></srai>
+														</set>
+														<condition var="list">
+															<li value="$">
+																<set var="list"/>
+															</li>
+														</condition>
+														<condition var="item">
+															<li value="$">
+																<set var="item"/>
+															</li>
+														</condition>
+													</think>
+													<loop/>
+												</li>
+											</condition>
+							<removefrommap>
+								<name>eventos</name>
+								<key><get name="dia"/></key>
+							</removefrommap>
+							<addtomap>
+								<name>eventos</name>
+								<key><get name="dia"/></key>
+								<value><get var="list_1"/> <get var="list"/><get name="nuevotitulo"/></value>
+							</addtomap>
+						<modifymap>
+							<name>titulo</name>
+							<key><get name="dia"/>_<get name="hora"/></key>
+							<value><get name="nuevotitulo"/></value>
+						</modifymap>
+						Hecho!
+					</template>
+				</category>
+			</topic>
+
+			<topic name="Quiere modificar la fecha, hora, titulo o contactos del evento?">
+				<category>
+					<pattern>contacto+</pattern>
+					<template>
+						<set name="topic">Quiere agregar o borrar un contacto</set>
+					</template>
+				</category>
+			</topic>
+
+			<topic name="Quiere agregar o borrar un contacto">
+				<category>
+					<pattern>agregar</pattern>
+					<template>
+						Dime el apellido del nuevo contacto
+						<think><set name="topic">Agregar nuevo contacto a evento</set></think>
+					</template>
+				</category>
+			</topic>
+
+				<topic name="Agregar nuevo contacto a evento">
+					<category>
+						<pattern>*</pattern>
+						<template>
+							<think>
+								<set var="tmp"><star/></set>
+								<set var="solucion"><first><get var="tmp"/></first></set>
+								<set var="tmp"><rest><get var="tmp"/></rest></set>
+								<condition var="tmp">
+									<li value="NIL">
+									</li>
+									<li>
+										<set var="solucion"><get var="solucion"/>_<first><get var="tmp"/></first></set>
+										<set var="tmp"><rest><get var="tmp"/></rest></set>
+										<loop/>
+									</li>
+								</condition>
+						 	</think>
+							<think><set name="contactos"><get var="solucion"/></set></think>
+							<think><set name="contacto_antiguo"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map></set></think>
+							<think><set name="buscar contactos en agenda a modificar en evento"><map name="nombre"><get name="contactos"/></map></set></think>
+							<think><set name="buscar contactos a modificar en evento"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/>_<get name="contactos"/></map></set></think>
+							<condition name="buscar contactos en agenda a modificar en evento">
+								<li value="unknown">
+									No existe ese contacto en tu agenda!
+								</li>
+								<li>
+									<condition name="contacto_antiguo">
+											<li value="unknown">
+												<addtomap>
+												<name>contactos_evento</name>
+												<key><get name="dia"/>_<get name="hora"/></key>
+												<value><get name="contactos"/></value>
+												</addtomap>
+												Quiere asociar otro contacto al evento?
+												<think><set name="topic">Agregar otro nuevo contacto a evento</set></think>
+											</li>
+											<li>
+												<removefrommap>
+													<name>contactos_evento</name>
+													<key><get name="dia"/>_<get name="hora"/></key>
+												</removefrommap>
+												<addtomap>
+												<name>contactos_evento</name>
+												<key><get name="dia"/>_<get name="hora"/></key>
+												<value><get name="contactos"/> <get name="contacto_antiguo"/></value>
+												</addtomap>
+												Quiere asociar otro contacto al evento?
+												<think><set name="topic">Agregar otro nuevo contacto a evento</set></think>
+											</li>
+										</condition>
+								</li>
+							</condition>
+					</template>
+					</category>
+				</topic>
+
+					<topic name="Agregar otro nuevo contacto a evento">
+						<category>
+							<pattern>si</pattern>
+							<template>
+								Dime el apellido del nuevo contacto
+								<think><set name="topic">Agregar nuevo contacto a evento</set></think>
+							</template>
+						</category>
+					</topic>
+
+					<topic name="Agregar otro nuevo contacto a evento">
+						<category>
+							<pattern>no</pattern>
+							<template>
+								Contacto agregado!
+							</template>
+						</category>
+					</topic>
+
+			<topic name="Quiere agregar o borrar un contacto">
+				<category>
+					<pattern>borrar</pattern>
+					<template>
+						<think><set name="haycontactos"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map></set></think>
+						<condition name="haycontactos">
+							<li value="unknown">
+								No hay contactos a borrar en ese evento!
+							</li>
+							<li>
+								Dime el apellido del contacto a borrar
+								<think><set name="topic">Borrar contacto en evento</set></think>
+							</li>
+						</condition>
+					</template>
+				</category>
+			</topic>
+
+				<topic name="Borrar contacto en evento">
+					<category>
+						<pattern>*</pattern>
+						<template>
+												<think>
+													<set var="buscado">
+														<uppercase><star/></uppercase>
+													</set>
+													<set var="lista">
+														<map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map>
+													</set>
+													<set var="item">
+														<uppercase><srai>TOP <get var="lista"/></srai></uppercase>
+													</set>
+													<set var="posicion">1</set>
+												</think>
+												<condition var="item">
+													<li value="$">No se ha encontrado ese contacto!</li>
+													<!-- al poner un think se jode y me borra el primero -->
+													<li><value><get var="buscado"/></value><get var="count"/></li>
+													<li>
+														<think>
+															<set var="posicion">
+																<map>
+																	<name>successor</name>
+																	<get var="posicion"/>
+																</map>
+															</set>
+															<set var="lista">
+																<srai>REMAIN <get var="lista"/></srai>
+															</set>
+															<set var="item">
+																<uppercase><srai>TOP <get var="lista"/></srai></uppercase>
+															</set>
+														</think>
+														<loop/>
+													</li>
+												</condition>
+
+											<think>
+												<set var="count"><get var="posicion"/></set>
+												<set var="list"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map></set>
+												<set var="list_1"/>
+												<set var="item"><srai>TOP <get var="list"/></srai></set>
+												<set var="list"><srai>REMAIN <get var="list"/></srai></set>
+											</think>
+											<condition var="count">
+												<li value="1">
+												</li>
+												<li>
+													<think>
+														<set var="count">
+															<map>
+																<name>predecessor</name>
+																<get var="count"/>
+															</map>
+														</set>
+														<set var="list_1">
+															<get var="list_1"/>
+															<get var="item"/>
+														</set>
+														<set var="item">
+															<srai>TOP <get var="list"/></srai>
+														</set>
+														<set var="list">
+															<srai>REMAIN <get var="list"/></srai>
+														</set>
+														<condition var="list">
+															<li value="$">
+																<set var="list"/>
+															</li>
+														</condition>
+														<condition var="item">
+															<li value="$">
+																<set var="item"/>
+															</li>
+														</condition>
+													</think>
+													<loop/>
+												</li>
+											</condition>
+							<removefrommap>
+								<name>contactos_evento</name>
+								<key><get name="dia"/>_<get name="hora"/></key>
+							</removefrommap>
+							<addtomap>
+								<name>contactos_evento</name>
+								<key><get name="dia"/>_<get name="hora"/></key>
+								<value><get var="list_1"/> <get var="list"/></value>
+							</addtomap>
+							Desea borrar otro contacto?
+							<think><set name="topic">Borrar otro contacto en evento</set></think>
+						</template>
+					</category>
+				</topic>
+					<topic name="Borrar otro contacto en evento">
+						<category>
+							<pattern>si</pattern>
+							<template>
+								Dime el apellido del contacto a borrar
+								<think><set name="topic">Borrar contacto en evento</set></think>
+							</template>
+						</category>
+					</topic>
+
+					<topic name="Borrar otro contacto en evento">
+						<category>
+							<pattern>no</pattern>
+							<template>
+								Contacto borrado!
+							</template>
+						</category>
+					</topic>
+
+<category>
+	<pattern>holita</pattern>
+	<template>
+		<think><set name="dia">01/01/2017</set></think>
+		<think><set name="hora">1030</set></think>
+		<think><set var="list"><map name="contactos_evento"><get name="dia"/>_<get name="hora"/></map></set></think>
+		<get var="list"/>
+	</template>
+</category>
+					
+
+<!-- BORRAR EVENTOS -->
+
+<category>
+	<pattern>^ borra+ ^ evento ^</pattern>
+	<template>
+		<set name="topic">Dime la fecha en formato dd/mm/aaaa para borrar el evento</set>
+	</template>
+</category>
+
+	<topic name="Dime la fecha en formato dd/mm/aaaa para borrar el evento">
+	<category>
+		<pattern><set>anios</set></pattern>
+		<template>
+			<think><set name="dia"><star/></set></think>
+			<set name="topic">Dime la hora en formato hhmm para borrar el evento</set>
+		</template>
+	</category>
+	</topic>
+
+		<topic name="Dime la hora en formato hhmm para borrar el evento">
+		<category>
+			<pattern><set>horas</set></pattern>
+			<template>
+				<think><set name="hora"><star/></set></think>
+				<think><set name="encontrar fecha al borrar"><map name="fecha"><get name="dia"/>_<get name="hora"/></map></set></think>
+				<condition name="encontrar fecha al borrar">
+					<li value="unknown">
+						No se ha encontrado ese evento!
+					</li>
+				<li><set name="topic">Seguro que quiere borrar el evento?</set></li>
+			</condition>
+		</template>
+	</category>
+	</topic>
+
+		<topic name="Seguro que quiere borrar el evento?">
+				<category>
+					<pattern>si</pattern>
+					<template>
+						<removefrommap>
+						<name>fecha</name>
+						<key><get name="dia"/>_<get name="hora"/></key>
+						</removefrommap>
+						<removefrommap>
+						<name>contactos_evento</name>
+						<key><get name="dia"/>_<get name="hora"/></key>
+						</removefrommap>
+												<think>
+													<set var="evento_buscado">
+														<map name="titulo"><get name="dia"/>_<get name="hora"/></map>
+													</set>
+													<set var="buscado">
+														<uppercase><get var="evento_buscado"/></uppercase>
+													</set>
+													<set var="lista">
+														<map name="eventos"><get name="dia"/></map>
+													</set>
+													<set var="item">
+														<uppercase><srai>TOP <get var="lista"/></srai></uppercase>
+													</set>
+													<set var="posicion">1</set>
+												</think>
+												<condition var="item">
+													<li value="$">No se ha encontrado ese evento!</li>
+													<!-- al poner un think se jode y me borra el primero -->
+													<li><value><get var="buscado"/></value><get var="count"/></li>
+													<li>
+														<think>
+															<set var="posicion">
+																<map>
+																	<name>successor</name>
+																	<get var="posicion"/>
+																</map>
+															</set>
+															<set var="lista">
+																<srai>REMAIN <get var="lista"/></srai>
+															</set>
+															<set var="item">
+																<uppercase><srai>TOP <get var="lista"/></srai></uppercase>
+															</set>
+														</think>
+														<loop/>
+													</li>
+												</condition>
+
+											<think>
+												<set var="count"><get var="posicion"/></set>
+												<set var="list"><map name="eventos"><get name="dia"/></map></set>
+												<set var="list_1"/>
+												<set var="item"><srai>TOP <get var="list"/></srai></set>
+												<set var="list"><srai>REMAIN <get var="list"/></srai></set>
+											</think>
+											<condition var="count">
+												<li value="1">
+												</li>
+												<li>
+													<think>
+														<set var="count">
+															<map>
+																<name>predecessor</name>
+																<get var="count"/>
+															</map>
+														</set>
+														<set var="list_1">
+															<get var="list_1"/>
+															<get var="item"/>
+														</set>
+														<set var="item">
+															<srai>TOP <get var="list"/></srai>
+														</set>
+														<set var="list">
+															<srai>REMAIN <get var="list"/></srai>
+														</set>
+														<condition var="list">
+															<li value="$">
+																<set var="list"/>
+															</li>
+														</condition>
+														<condition var="item">
+															<li value="$">
+																<set var="item"/>
+															</li>
+														</condition>
+													</think>
+													<loop/>
+												</li>
+											</condition>
+							<think><set name="hayevento2"><get var="list_1"/> <get var="list"/></set></think>
+							<removefrommap>
+								<name>eventos</name>
+								<key><get name="dia"/></key>
+							</removefrommap>
+							<condition name="hayevento2">
+								<li value="$">
+								</li>
+								<li>
+									<addtomap>
+									<name>eventos</name>
+									<key><get name="dia"/></key>
+									<value><get var="list_1"/> <get var="list"/></value>
+								</addtomap>
+								</li>
+							</condition>
+							<removefrommap>
+								<name>titulo</name>
+								<key><get name="dia"/>_<get name="hora"/></key>
+							</removefrommap>
+						Evento borrado!
+					</template>
+				</category>
+		</topic>
+
+		<topic name="Seguro que quiere borrar el evento?">
+				<category>
+					<pattern>no</pattern>
+					<template>
+						Evento no borrado
+					</template>
+				</category>
+		</topic>
+
+<!-- BUSCAR EVENTOS EN UN DIA DETERMINADO -->
+
+<category>
+	<pattern>^ evento+ ^ dia *</pattern>
+	<template>
+		<think><set name="dia"><star index="3"/></set></think>
+		<think><set name="encontrar evento"><map name="eventos"><get name="dia"/></map></set></think>
+		<condition name="encontrar evento">
+			<li value="unknown">
+				No se ha encontrado eventos ese dia!
+			</li>
+
+			<li>
+				Los eventos del día <get name="dia"/> son: <get name="encontrar evento"/>
+			</li>
+
+		</condition>
+	</template>
+</category>
+
+<!-- CONTAR EVENTOS EN UN DIA DETERMINADO -->
+
+<category>
+	<pattern>^ numero ^ evento+ hay ^ dia *</pattern>
+	<template>
+		<think><set name="dia"><star index="4"/></set></think>
+		<think><set name="encontrar evento"><map name="eventos"><get name="dia"/></map></set></think>
+		<condition name="encontrar evento">
+			<li value="unknown">
+				No se ha encontrado eventos ese dia!
+			</li>
+
+			<li>
+				<think>
+					<set var="count">0</set>
+					<set var="list">
+						<get name="encontrar evento"/>
+					</set>
+					<set var="item">
+						<srai>TOP <get var="list"/></srai>
+					</set>
+				</think>
+				<condition var="item">
+					<li>
+						<value>$</value>
+						El numero de eventos el día <get name="dia"/> es: <get var="count"/>
+					</li>
+					<li>
+						<think>
+							<set var="count">
+								<map>
+									<name>successor</name>
+									<get var="count"/>
+								</map>
+							</set>
+							<set var="list">
+								<srai>REMAIN <get var="list"/></srai>
+							</set>
+							<set var="item">
+								<srai>TOP <get var="list"/></srai>
+							</set>
+						</think>
+						<loop/>
+					</li>
+				</condition>
+				</li>
+
+
+		</condition>
+		
+	</template>
+</category>
+
+<!-- REGLA POR DEFECTO -->
+<category>
+	<pattern>*</pattern>
+	<template>
+		No es válido lo que has escrito
+	</template>
+</category>
+
+</aiml>

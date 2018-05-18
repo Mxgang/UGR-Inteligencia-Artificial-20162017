@@ -1,0 +1,14 @@
+pikachu:electrico
+bulbasaur:planta
+charmander:fuego
+squirtle:agua
+dratini:dragón
+koffing:veneno
+paras:bicho
+abra:psiquico
+steelix:acero
+onix:roca
+clefairy:hada
+pidgey:volador
+sandshrew:tierra
+houndour:siniestro
